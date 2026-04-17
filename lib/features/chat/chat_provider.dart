@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../../connectors/claude_api_connector.dart';
+import '../../connectors/connector_registry.dart';
 import '../../connectors/connector_interface.dart';
 import 'chat_message.dart';
 
@@ -23,15 +23,10 @@ Current focus: Growth Loop sprints (GL-1 through GL-10+).
 Be direct. No preamble. No summaries at the end. Dhayan is a senior engineer who reads diffs.
 ''';
 
-// API key read from environment. Set CLAUDE_API_KEY in your shell or .env.
-final _claudeConnector = ClaudeApiConnector(
-  apiKey: const String.fromEnvironment('CLAUDE_API_KEY', defaultValue: ''),
-);
-
-final chatProvider = StateNotifierProvider<ChatNotifier, List<ChatMessage>>((
-  ref,
-) {
-  return ChatNotifier(_claudeConnector);
+final chatProvider =
+    StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
+  final connector = ref.watch(activeConnectorProvider);
+  return ChatNotifier(connector);
 });
 
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {

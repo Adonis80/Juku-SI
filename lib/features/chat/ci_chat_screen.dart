@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../connectors/connector_registry.dart';
 import '../../theme/glass_card.dart';
 import '../../theme/holo_text.dart';
 import '../../theme/si_colors.dart';
@@ -26,6 +27,17 @@ class _CiChatScreenState extends ConsumerState<CiChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _showConnectorSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: SIColors.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _ConnectorSheet(),
+    );
   }
 
   Future<void> _send() async {
@@ -66,6 +78,7 @@ class _CiChatScreenState extends ConsumerState<CiChatScreen> {
             onConfirm: () => ref.read(chatProvider.notifier).clearHistory(),
           ),
         ),
+        onSelectConnector: () => _showConnectorSheet(context),
       ),
       body: Column(
         children: [
@@ -89,25 +102,58 @@ class _CiChatScreenState extends ConsumerState<CiChatScreen> {
 
 // ── AppBar ────────────────────────────────────────────────────────────────────
 
-class _AppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _AppBar({required this.onClear});
+class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
+  const _AppBar({required this.onClear, required this.onSelectConnector});
   final VoidCallback onClear;
+  final VoidCallback onSelectConnector;
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connectors = ref.watch(allConnectorsProvider);
+    final activeIndex = ref.watch(activeConnectorIndexProvider);
+    final active = connectors[activeIndex];
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
-      title: const HoloText(
-        'CENTRAL INTELLIGENCE',
-        fontSize: 13,
-        fontWeight: FontWeight.w300,
-        letterSpacing: 4,
-        textAlign: TextAlign.start,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const HoloText(
+            'CENTRAL INTELLIGENCE',
+            fontSize: 11,
+            fontWeight: FontWeight.w300,
+            letterSpacing: 3,
+            textAlign: TextAlign.start,
+          ),
+          GestureDetector(
+            onTap: onSelectConnector,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  active.name,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: active.isConfigured ? SIColors.cyan : SIColors.red,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.expand_more_rounded,
+                  size: 14,
+                  color: active.isConfigured ? SIColors.cyan : SIColors.red,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       actions: [
         IconButton(
@@ -118,6 +164,93 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         const SizedBox(width: 8),
       ],
+    );
+  }
+}
+
+// ── Connector selector bottom sheet ──────────────────────────────────────────
+
+class _ConnectorSheet extends ConsumerWidget {
+  const _ConnectorSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connectors = ref.watch(allConnectorsProvider);
+    final activeIndex = ref.watch(activeConnectorIndexProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HoloText('SELECT MODEL', fontSize: 11, letterSpacing: 3),
+          const SizedBox(height: 16),
+          ...List.generate(connectors.length, (i) {
+            final c = connectors[i];
+            final isActive = i == activeIndex;
+            return GestureDetector(
+              onTap: () {
+                ref.read(activeConnectorIndexProvider.notifier).state = i;
+                Navigator.pop(context);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? SIColors.cyan.withValues(alpha: 0.08)
+                      : SIColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isActive
+                        ? SIColors.cyan.withValues(alpha: 0.4)
+                        : SIColors.outline,
+                    width: isActive ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c.name,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isActive
+                                  ? SIColors.cyan
+                                  : SIColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            c.isConfigured ? 'Configured' : 'API key not set',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: c.isConfigured
+                                  ? SIColors.textMuted
+                                  : SIColors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isActive)
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: SIColors.cyan,
+                        size: 18,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 }
