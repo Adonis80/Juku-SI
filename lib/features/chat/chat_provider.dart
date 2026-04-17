@@ -28,7 +28,9 @@ final _claudeConnector = ClaudeApiConnector(
   apiKey: const String.fromEnvironment('CLAUDE_API_KEY', defaultValue: ''),
 );
 
-final chatProvider = StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
+final chatProvider = StateNotifierProvider<ChatNotifier, List<ChatMessage>>((
+  ref,
+) {
   return ChatNotifier(_claudeConnector);
 });
 
@@ -89,12 +91,14 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       final json = state
           .where((m) => !m.isLoading)
           .take(100)
-          .map((m) => {
-                'id': m.id,
-                'role': m.role.name,
-                'text': m.text,
-                'timestamp': m.timestamp.toIso8601String(),
-              })
+          .map(
+            (m) => {
+              'id': m.id,
+              'role': m.role.name,
+              'text': m.text,
+              'timestamp': m.timestamp.toIso8601String(),
+            },
+          )
           .toList();
       await prefs.setString(_historyKey, jsonEncode(json));
     } catch (_) {}

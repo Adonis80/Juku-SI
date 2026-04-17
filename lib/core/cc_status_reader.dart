@@ -45,7 +45,10 @@ class CcStatus {
 ///
 /// Claude Code (or a companion watcher script) should serve status.json
 /// at this port. Returns [CcStatus.empty] when offline or malformed.
-Future<CcStatus> readCcStatus({String host = 'localhost', int port = 3333}) async {
+Future<CcStatus> readCcStatus({
+  String host = 'localhost',
+  int port = 3333,
+}) async {
   try {
     final uri = Uri.http('$host:$port', '/status.json');
     final response = await http.get(uri).timeout(const Duration(seconds: 2));

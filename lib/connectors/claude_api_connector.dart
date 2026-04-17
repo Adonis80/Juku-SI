@@ -36,17 +36,16 @@ class ClaudeApiConnector implements LlmConnector {
     String? systemPrompt,
     List<String> contextFiles = const [],
   }) async {
-    if (!isConfigured) return '⚠️ Claude API key not configured. Set CLAUDE_API_KEY.';
+    if (!isConfigured) {
+      return '⚠️ Claude API key not configured. Set CLAUDE_API_KEY.';
+    }
 
     try {
       final body = <String, dynamic>{
         'model': _model,
         'max_tokens': _maxTokens,
         'messages': [
-          {
-            'role': 'user',
-            'content': _buildContent(message, contextFiles),
-          },
+          {'role': 'user', 'content': _buildContent(message, contextFiles)},
         ],
       };
 
@@ -65,7 +64,9 @@ class ClaudeApiConnector implements LlmConnector {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('[ClaudeApiConnector] error ${response.statusCode}: ${response.body}');
+        debugPrint(
+          '[ClaudeApiConnector] error ${response.statusCode}: ${response.body}',
+        );
         return '⚠️ Claude API error: HTTP ${response.statusCode}';
       }
 

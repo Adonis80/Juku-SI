@@ -32,7 +32,11 @@ class PerspectiveGridPainter extends CustomPainter {
     for (int i = 0; i <= verticalLines; i++) {
       final t = i / verticalLines;
       final bottomX = cx - halfSpread + t * halfSpread * 2;
-      canvas.drawLine(Offset(cx, horizonY), Offset(bottomX, size.height), paint);
+      canvas.drawLine(
+        Offset(cx, horizonY),
+        Offset(bottomX, size.height),
+        paint,
+      );
     }
 
     for (int i = 0; i < horizontalLines; i++) {

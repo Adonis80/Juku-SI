@@ -38,7 +38,12 @@ class _CcStatusPanelState extends State<CcStatusPanel> {
     if (_loading) return;
     setState(() => _loading = true);
     final status = await readCcStatus();
-    if (mounted) setState(() { _status = status; _loading = false; });
+    if (mounted) {
+      setState(() {
+        _status = status;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -92,7 +97,10 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
             child: SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: SIColors.cyan),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: SIColors.cyan,
+              ),
             ),
           )
         else
@@ -139,15 +147,15 @@ class _StatusCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _stateColor.withValues(alpha: 0.1),
-              border: Border.all(color: _stateColor.withValues(alpha: 0.3)),
-            ),
-            child: Icon(_stateIcon, color: _stateColor, size: 22),
-          )
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _stateColor.withValues(alpha: 0.1),
+                  border: Border.all(color: _stateColor.withValues(alpha: 0.3)),
+                ),
+                child: Icon(_stateIcon, color: _stateColor, size: 22),
+              )
               .animate(
                 onPlay: status.state == 'working'
                     ? (c) => c.repeat(reverse: true)
@@ -187,10 +195,7 @@ class _StatusCard extends StatelessWidget {
           if (status.updatedAt.millisecondsSinceEpoch > 0)
             Text(
               _timeAgo(status.updatedAt),
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: SIColors.textMuted,
-              ),
+              style: GoogleFonts.inter(fontSize: 11, color: SIColors.textMuted),
             ),
         ],
       ),

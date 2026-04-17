@@ -44,10 +44,7 @@ class SIShell extends StatefulWidget {
 class _SIShellState extends State<SIShell> {
   int _currentIndex = 0;
 
-  static const _screens = [
-    CiChatScreen(),
-    CcStatusPanel(),
-  ];
+  static const _screens = [CiChatScreen(), CcStatusPanel()];
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +54,7 @@ class _SIShellState extends State<SIShell> {
         children: [
           // Perspective grid background — always visible
           Positioned.fill(
-            child: CustomPaint(
-              painter: const PerspectiveGridPainter(),
-            ),
+            child: CustomPaint(painter: const PerspectiveGridPainter()),
           ),
           // Active screen
           IndexedStack(index: _currentIndex, children: _screens),
@@ -96,7 +91,10 @@ class _BottomNav extends StatelessWidget {
               Icons.chat_bubble_outline_rounded,
               color: currentIndex == 0 ? SIColors.cyan : SIColors.textMuted,
             ),
-            selectedIcon: const Icon(Icons.chat_bubble_rounded, color: SIColors.cyan),
+            selectedIcon: const Icon(
+              Icons.chat_bubble_rounded,
+              color: SIColors.cyan,
+            ),
             label: 'CI Chat',
           ),
           NavigationDestination(
@@ -104,7 +102,10 @@ class _BottomNav extends StatelessWidget {
               Icons.monitor_heart_outlined,
               color: currentIndex == 1 ? SIColors.cyan : SIColors.textMuted,
             ),
-            selectedIcon: const Icon(Icons.monitor_heart_rounded, color: SIColors.cyan),
+            selectedIcon: const Icon(
+              Icons.monitor_heart_rounded,
+              color: SIColors.cyan,
+            ),
             label: 'CC Status',
           ),
         ],

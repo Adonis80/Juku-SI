@@ -80,11 +80,7 @@ class _CiChatScreenState extends ConsumerState<CiChatScreen> {
                         _MessageBubble(message: messages[i], index: i),
                   ),
           ),
-          _InputBar(
-            controller: _controller,
-            sending: _sending,
-            onSend: _send,
-          ),
+          _InputBar(controller: _controller, sending: _sending, onSend: _send),
         ],
       ),
     );
@@ -138,27 +134,28 @@ class _MessageBubble extends StatelessWidget {
     final isUser = message.isUser;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isUser) _AvatarDot(isLoading: message.isLoading),
-          const SizedBox(width: 8),
-          Flexible(
-            child: isUser ? _UserBubble(message: message) : _AiBubble(message: message),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isUser) _AvatarDot(isLoading: message.isLoading),
+              const SizedBox(width: 8),
+              Flexible(
+                child: isUser
+                    ? _UserBubble(message: message)
+                    : _AiBubble(message: message),
+              ),
+              const SizedBox(width: 8),
+              if (isUser) const _UserDot(),
+            ],
           ),
-          const SizedBox(width: 8),
-          if (isUser) const _UserDot(),
-        ],
-      ),
-    ).animate().fadeIn(duration: 200.ms).slideY(
-          begin: 0.1,
-          end: 0,
-          duration: 250.ms,
-          curve: Curves.easeOut,
-        );
+        )
+        .animate()
+        .fadeIn(duration: 200.ms)
+        .slideY(begin: 0.1, end: 0, duration: 250.ms, curve: Curves.easeOut);
   }
 }
 
@@ -265,7 +262,10 @@ class _TypingIndicatorState extends State<_TypingIndicator>
             animation: _ctrl,
             builder: (context2, snap) {
               final phase = (_ctrl.value - i * 0.15).clamp(0.0, 1.0);
-              final opacity = (phase < 0.5 ? phase * 2 : (1 - phase) * 2).clamp(0.3, 1.0);
+              final opacity = (phase < 0.5 ? phase * 2 : (1 - phase) * 2).clamp(
+                0.3,
+                1.0,
+              );
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 width: 6,
@@ -295,7 +295,10 @@ class _AvatarDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: SIColors.surface,
-        border: Border.all(color: SIColors.cyan.withValues(alpha: 0.4), width: 1),
+        border: Border.all(
+          color: SIColors.cyan.withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: Center(
         child: Text(
@@ -323,7 +326,10 @@ class _UserDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: SIColors.purple.withValues(alpha: 0.2),
-        border: Border.all(color: SIColors.purple.withValues(alpha: 0.4), width: 1),
+        border: Border.all(
+          color: SIColors.purple.withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: const Center(
         child: Icon(Icons.person_rounded, size: 14, color: SIColors.purple),
@@ -344,29 +350,41 @@ class _EmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: SIColors.cyan.withValues(alpha: 0.3), width: 1),
-              color: SIColors.surface,
-            ),
-            child: const Center(
-              child: Text(
-                'CI',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w200,
-                  color: SIColors.cyan,
-                  letterSpacing: 3,
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: SIColors.cyan.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                  color: SIColors.surface,
                 ),
-              ),
-            ),
-          )
+                child: const Center(
+                  child: Text(
+                    'CI',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w200,
+                      color: SIColors.cyan,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scaleXY(begin: 1, end: 1.04, duration: 2000.ms, curve: Curves.easeInOut),
+              .scaleXY(
+                begin: 1,
+                end: 1.04,
+                duration: 2000.ms,
+                curve: Curves.easeInOut,
+              ),
           const SizedBox(height: 24),
-          const HoloText('CENTRAL INTELLIGENCE READY', fontSize: 13, letterSpacing: 3),
+          const HoloText(
+            'CENTRAL INTELLIGENCE READY',
+            fontSize: 13,
+            letterSpacing: 3,
+          ),
           const SizedBox(height: 8),
           Text(
             'Ask anything. CI routes to the right tool.',
@@ -406,9 +424,7 @@ class _InputBar extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: SIColors.surface.withValues(alpha: 0.8),
-        border: Border(
-          top: BorderSide(color: SIColors.outline, width: 0.5),
-        ),
+        border: Border(top: BorderSide(color: SIColors.outline, width: 0.5)),
       ),
       child: Row(
         children: [
@@ -457,7 +473,9 @@ class _InputBar extends StatelessWidget {
                     ? SIColors.outline
                     : SIColors.cyan.withValues(alpha: 0.15),
                 border: Border.all(
-                  color: sending ? SIColors.outline : SIColors.cyan.withValues(alpha: 0.5),
+                  color: sending
+                      ? SIColors.outline
+                      : SIColors.cyan.withValues(alpha: 0.5),
                 ),
                 boxShadow: sending
                     ? []
@@ -507,7 +525,10 @@ class _ClearDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: GoogleFonts.inter(color: SIColors.textMuted)),
+          child: Text(
+            'Cancel',
+            style: GoogleFonts.inter(color: SIColors.textMuted),
+          ),
         ),
         TextButton(
           onPressed: () {

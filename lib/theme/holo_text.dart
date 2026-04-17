@@ -48,7 +48,11 @@ class HoloText extends StatelessWidget {
 
 /// "// LABEL //" formatted holographic header.
 class HoloHeader extends StatelessWidget {
-  const HoloHeader(this.label, {super.key, this.glowColor = const Color(0xFF00D4FF)});
+  const HoloHeader(
+    this.label, {
+    super.key,
+    this.glowColor = const Color(0xFF00D4FF),
+  });
 
   final String label;
   final Color glowColor;
