@@ -1,34 +1,31 @@
-import 'package:flutter/foundation.dart';
-
-@immutable
+/// A single message in the CI chat.
 class ChatMessage {
-  final String id;
-  final String content;
-  final bool isUser;
-  final DateTime timestamp;
-  final String? connectorName;
-
   const ChatMessage({
     required this.id,
-    required this.content,
-    required this.isUser,
+    required this.role,
+    required this.text,
     required this.timestamp,
-    this.connectorName,
+    this.isLoading = false,
   });
 
-  factory ChatMessage.user(String content) => ChatMessage(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        content: content,
-        isUser: true,
-        timestamp: DateTime.now(),
-      );
+  final String id;
+  final ChatRole role;
+  final String text;
+  final DateTime timestamp;
+  final bool isLoading;
 
-  factory ChatMessage.assistant(String content, {String? connectorName}) =>
-      ChatMessage(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        content: content,
-        isUser: false,
-        timestamp: DateTime.now(),
-        connectorName: connectorName,
-      );
+  bool get isUser => role == ChatRole.user;
+  bool get isAssistant => role == ChatRole.assistant;
+
+  ChatMessage copyWith({String? text, bool? isLoading}) {
+    return ChatMessage(
+      id: id,
+      role: role,
+      text: text ?? this.text,
+      timestamp: timestamp,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }
+
+enum ChatRole { user, assistant }

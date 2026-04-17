@@ -1,37 +1,52 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'si_colors.dart';
 
+/// Glassmorphism card — blurred backdrop, gradient fill, coloured border.
 class GlassCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final double borderRadius;
-  final Color? borderColor;
-  final double blur;
-
   const GlassCard({
     super.key,
     required this.child,
-    this.padding,
-    this.borderRadius = 16,
-    this.borderColor,
-    this.blur = 10,
+    this.borderColor = const Color(0xFF00D4FF),
+    this.borderOpacity = 0.20,
+    this.borderRadius = 20.0,
+    this.blurSigma = 12.0,
+    this.padding = const EdgeInsets.all(20),
+    this.width,
+    this.height,
   });
+
+  final Widget child;
+  final Color borderColor;
+  final double borderOpacity;
+  final double borderRadius;
+  final double blurSigma;
+  final EdgeInsetsGeometry padding;
+  final double? width;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        filter: ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
         child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
+          width: width,
+          height: height,
+          padding: padding,
           decoration: BoxDecoration(
-            color: SiColors.surfaceCard.withAlpha(200),
             borderRadius: BorderRadius.circular(borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.07),
+                Colors.white.withValues(alpha: 0.03),
+              ],
+            ),
             border: Border.all(
-              color: borderColor ?? SiColors.outline,
-              width: 0.5,
+              color: borderColor.withValues(alpha: borderOpacity),
+              width: 1.0,
             ),
           ),
           child: child,

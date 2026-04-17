@@ -1,123 +1,291 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/cc_status_reader.dart';
 import '../../theme/glass_card.dart';
 import '../../theme/holo_text.dart';
 import '../../theme/si_colors.dart';
-import 'cc_status_provider.dart';
 
-class CcStatusPanel extends ConsumerWidget {
+class CcStatusPanel extends StatefulWidget {
   const CcStatusPanel({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final statusAsync = ref.watch(ccStatusProvider);
-    final isActive = statusAsync.valueOrNull?.isActive ?? false;
+  State<CcStatusPanel> createState() => _CcStatusPanelState();
+}
 
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      borderColor: isActive
-          ? SiColors.primary.withAlpha(120)
-          : SiColors.outline,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+class _CcStatusPanelState extends State<CcStatusPanel> {
+  CcStatus _status = CcStatus.empty;
+  Timer? _timer;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    final status = await readCcStatus();
+    if (mounted) setState(() { _status = status; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: _AppBar(loading: _loading, onRefresh: _refresh),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          Row(
-            children: [
-              _StatusDot(isActive: isActive),
-              const SizedBox(width: 8),
-              const HoloText('CLAUDE CODE', fontSize: 11),
-            ],
-          ),
-          const SizedBox(height: 6),
-          statusAsync.when(
-            data: (status) => _StatusBody(status: status),
-            loading: () => Text(
-              'Connecting...',
-              style:
-                  GoogleFonts.inter(fontSize: 11, color: SiColors.textMuted),
-            ),
-            error: (error, stack) => Text(
-              'Unavailable',
-              style: GoogleFonts.inter(fontSize: 11, color: SiColors.danger),
-            ),
-          ),
+          _StatusCard(status: _status),
+          const SizedBox(height: 16),
+          _TaskCard(status: _status),
+          const SizedBox(height: 16),
+          _OutputCard(status: _status),
+          const SizedBox(height: 16),
+          _SetupNote(),
         ],
       ),
     );
   }
 }
 
-class _StatusDot extends StatelessWidget {
-  final bool isActive;
-  const _StatusDot({required this.isActive});
+// ── AppBar ────────────────────────────────────────────────────────────────────
+
+class _AppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _AppBar({required this.loading, required this.onRefresh});
+  final bool loading;
+  final VoidCallback onRefresh;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? SiColors.success : SiColors.textMuted;
-    Widget dot = Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: isActive
-            ? [BoxShadow(color: color.withAlpha(120), blurRadius: 6)]
-            : null,
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: false,
+      title: const HoloText(
+        'CC STATUS',
+        fontSize: 13,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 4,
+        textAlign: TextAlign.start,
       ),
-    );
-    if (isActive) {
-      dot = dot
-          .animate(onPlay: (c) => c.repeat())
-          .fadeOut(duration: 800.ms, curve: Curves.easeInOut)
-          .then()
-          .fadeIn(duration: 800.ms);
-    }
-    return dot;
-  }
-}
-
-class _StatusBody extends StatelessWidget {
-  final CcStatus status;
-  const _StatusBody({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    if (!status.isActive) {
-      return Text(
-        'Idle',
-        style: GoogleFonts.inter(fontSize: 11, color: SiColors.textMuted),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (status.currentTask != null)
-          Text(
-            status.currentTask!,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-                fontSize: 11, color: SiColors.textSecondary),
+      actions: [
+        if (loading)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: SIColors.cyan),
+            ),
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, size: 20),
+            color: SIColors.textMuted,
+            onPressed: onRefresh,
           ),
-        if (status.lastUpdated != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            _rel(status.lastUpdated!),
-            style:
-                GoogleFonts.inter(fontSize: 10, color: SiColors.textMuted),
-          ),
-        ],
+        const SizedBox(width: 8),
       ],
     );
   }
+}
 
-  String _rel(DateTime dt) {
+// ── Cards ─────────────────────────────────────────────────────────────────────
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({required this.status});
+  final CcStatus status;
+
+  Color get _stateColor {
+    return switch (status.state) {
+      'working' => SIColors.green,
+      'idle' => SIColors.cyan,
+      'error' => SIColors.red,
+      _ => SIColors.textMuted,
+    };
+  }
+
+  IconData get _stateIcon {
+    return switch (status.state) {
+      'working' => Icons.build_circle_rounded,
+      'idle' => Icons.check_circle_outline_rounded,
+      'error' => Icons.error_outline_rounded,
+      _ => Icons.radio_button_unchecked_rounded,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      borderColor: _stateColor,
+      borderOpacity: 0.25,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _stateColor.withValues(alpha: 0.1),
+              border: Border.all(color: _stateColor.withValues(alpha: 0.3)),
+            ),
+            child: Icon(_stateIcon, color: _stateColor, size: 22),
+          )
+              .animate(
+                onPlay: status.state == 'working'
+                    ? (c) => c.repeat(reverse: true)
+                    : null,
+              )
+              .scaleXY(
+                begin: 1,
+                end: status.state == 'working' ? 1.08 : 1,
+                duration: 1200.ms,
+                curve: Curves.easeInOut,
+              ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HoloText(
+                  'CLAUDE CODE',
+                  glowColor: _stateColor,
+                  fontSize: 11,
+                  letterSpacing: 3,
+                  textAlign: TextAlign.start,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  status.state.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w300,
+                    color: _stateColor,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (status.updatedAt.millisecondsSinceEpoch > 0)
+            Text(
+              _timeAgo(status.updatedAt),
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: SIColors.textMuted,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     return '${diff.inHours}h ago';
+  }
+}
+
+class _TaskCard extends StatelessWidget {
+  const _TaskCard({required this.status});
+  final CcStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      borderColor: SIColors.cyan,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HoloHeader('CURRENT TASK'),
+          const SizedBox(height: 12),
+          Text(
+            status.currentTask.isEmpty ? '—' : status.currentTask,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: status.currentTask.isEmpty
+                  ? SIColors.textMuted
+                  : SIColors.textPrimary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OutputCard extends StatelessWidget {
+  const _OutputCard({required this.status});
+  final CcStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    if (status.lastOutput.isEmpty) return const SizedBox.shrink();
+    return GlassCard(
+      borderColor: SIColors.purple,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HoloHeader('LAST OUTPUT', glowColor: SIColors.purple),
+          const SizedBox(height: 12),
+          Text(
+            status.lastOutput,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 12,
+              color: SIColors.textSecondary,
+              height: 1.6,
+            ),
+            maxLines: 20,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SetupNote extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      borderColor: SIColors.amber,
+      borderOpacity: 0.15,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HoloHeader('CC BRIDGE', glowColor: SIColors.amber),
+          const SizedBox(height: 12),
+          Text(
+            'SI reads CC status from localhost:3333/status.json.\n'
+            'Run the companion watcher to enable live CC state.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: SIColors.textMuted,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

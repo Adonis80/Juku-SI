@@ -1,48 +1,56 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'si_colors.dart';
 
+/// Minority Report-style receding perspective grid.
 class PerspectiveGridPainter extends CustomPainter {
-  final double animationValue;
-  const PerspectiveGridPainter({this.animationValue = 0});
+  const PerspectiveGridPainter({
+    this.lineColor = const Color(0xFF00D4FF),
+    this.lineOpacity = 0.06,
+    this.horizonGlowOpacity = 0.12,
+    this.verticalLines = 14,
+    this.horizontalLines = 16,
+  });
+
+  final Color lineColor;
+  final double lineOpacity;
+  final double horizonGlowOpacity;
+  final int verticalLines;
+  final int horizontalLines;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final vp = Offset(size.width / 2, size.height * 0.4);
-    const lineCount = 20;
-    final horizonY = size.height * 0.4;
+    final paint = Paint()
+      ..color = lineColor.withValues(alpha: lineOpacity)
+      ..strokeWidth = 0.7
+      ..style = PaintingStyle.stroke;
 
-    final faintPaint = Paint()
-      ..color = SiColors.outline.withAlpha(60)
-      ..strokeWidth = 0.5;
+    final cx = size.width / 2;
+    final horizonY = size.height * 0.35;
+
+    final halfSpread = size.width * 0.65;
+    for (int i = 0; i <= verticalLines; i++) {
+      final t = i / verticalLines;
+      final bottomX = cx - halfSpread + t * halfSpread * 2;
+      canvas.drawLine(Offset(cx, horizonY), Offset(bottomX, size.height), paint);
+    }
+
+    for (int i = 0; i < horizontalLines; i++) {
+      final t = math.pow((i + 1) / horizontalLines, 2.2).toDouble();
+      final y = horizonY + t * (size.height - horizonY);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
 
     final glowPaint = Paint()
-      ..color = SiColors.primary.withAlpha(20)
-      ..strokeWidth = 1;
-
-    for (int i = 1; i <= lineCount; i++) {
-      final t = i / lineCount;
-      final y = horizonY + (size.height - horizonY) * math.pow(t, 1.5);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y),
-          (i % 5 == 0) ? glowPaint : faintPaint);
-    }
-
-    const vLineCount = 16;
-    for (int i = 0; i <= vLineCount; i++) {
-      final x = size.width * i / vLineCount;
-      canvas.drawLine(Offset(x, size.height), vp,
-          (i % 4 == 0) ? glowPaint : faintPaint);
-    }
-
-    final horizonPaint = Paint()
-      ..color = SiColors.primary.withAlpha(40)
-      ..strokeWidth = 1
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawLine(
-        Offset(0, horizonY), Offset(size.width, horizonY), horizonPaint);
+      ..shader = ui.Gradient.linear(
+        Offset(0, horizonY),
+        Offset(0, horizonY + 100),
+        [lineColor.withValues(alpha: horizonGlowOpacity), Colors.transparent],
+      );
+    canvas.drawRect(Rect.fromLTWH(0, horizonY - 2, size.width, 104), glowPaint);
   }
 
   @override
   bool shouldRepaint(PerspectiveGridPainter old) =>
-      old.animationValue != animationValue;
+      old.lineOpacity != lineOpacity;
 }
