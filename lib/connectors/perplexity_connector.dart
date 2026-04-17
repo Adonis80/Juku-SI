@@ -63,13 +63,17 @@ class PerplexityConnector implements LlmConnector {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('[PerplexityConnector] error ${response.statusCode}: ${response.body}');
+        debugPrint(
+          '[PerplexityConnector] error ${response.statusCode}: ${response.body}',
+        );
         return '⚠️ Perplexity error: HTTP ${response.statusCode}';
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final choices = data['choices'] as List<dynamic>;
-      final text = ((choices.first as Map)['message'] as Map)['content'] as String? ?? '';
+      final text =
+          ((choices.first as Map)['message'] as Map)['content'] as String? ??
+          '';
 
       final usage = data['usage'] as Map<String, dynamic>? ?? {};
       final inputTokens = (usage['prompt_tokens'] as int?) ?? 0;

@@ -23,8 +23,9 @@ Current focus: Growth Loop sprints (GL-1 through GL-10+).
 Be direct. No preamble. No summaries at the end. Dhayan is a senior engineer who reads diffs.
 ''';
 
-final chatProvider =
-    StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
+final chatProvider = StateNotifierProvider<ChatNotifier, List<ChatMessage>>((
+  ref,
+) {
   final connector = ref.watch(activeConnectorProvider);
   return ChatNotifier(connector);
 });

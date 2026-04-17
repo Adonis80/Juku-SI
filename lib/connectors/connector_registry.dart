@@ -18,7 +18,10 @@ final allConnectorsProvider = Provider<List<LlmConnector>>((ref) {
       apiKey: const String.fromEnvironment('GEMINI_API_KEY', defaultValue: ''),
     ),
     PerplexityConnector(
-      apiKey: const String.fromEnvironment('PERPLEXITY_API_KEY', defaultValue: ''),
+      apiKey: const String.fromEnvironment(
+        'PERPLEXITY_API_KEY',
+        defaultValue: '',
+      ),
     ),
   ];
 });

@@ -68,13 +68,16 @@ class GeminiConnector implements LlmConnector {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('[GeminiConnector] error ${response.statusCode}: ${response.body}');
+        debugPrint(
+          '[GeminiConnector] error ${response.statusCode}: ${response.body}',
+        );
         return '⚠️ Gemini error: HTTP ${response.statusCode}';
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final candidates = data['candidates'] as List<dynamic>;
-      final content = (candidates.first as Map)['content'] as Map<String, dynamic>;
+      final content =
+          (candidates.first as Map)['content'] as Map<String, dynamic>;
       final parts = content['parts'] as List<dynamic>;
       final text = (parts.first as Map)['text'] as String? ?? '';
 

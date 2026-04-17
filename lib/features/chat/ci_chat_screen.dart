@@ -196,7 +196,10 @@ class _ConnectorSheet extends ConsumerWidget {
               },
               child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: isActive
                       ? SIColors.cyan.withValues(alpha: 0.08)

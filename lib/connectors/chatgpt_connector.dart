@@ -44,7 +44,10 @@ class ChatGptConnector implements LlmConnector {
       if (systemPrompt != null && systemPrompt.isNotEmpty) {
         messages.add({'role': 'system', 'content': systemPrompt});
       }
-      messages.add({'role': 'user', 'content': _buildContent(message, contextFiles)});
+      messages.add({
+        'role': 'user',
+        'content': _buildContent(message, contextFiles),
+      });
 
       final response = await http.post(
         Uri.parse(_apiUrl),
@@ -60,13 +63,17 @@ class ChatGptConnector implements LlmConnector {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('[ChatGptConnector] error ${response.statusCode}: ${response.body}');
+        debugPrint(
+          '[ChatGptConnector] error ${response.statusCode}: ${response.body}',
+        );
         return '⚠️ OpenAI error: HTTP ${response.statusCode}';
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final choices = data['choices'] as List<dynamic>;
-      final text = ((choices.first as Map)['message'] as Map)['content'] as String? ?? '';
+      final text =
+          ((choices.first as Map)['message'] as Map)['content'] as String? ??
+          '';
 
       final usage = data['usage'] as Map<String, dynamic>? ?? {};
       final inputTokens = (usage['prompt_tokens'] as int?) ?? 0;
